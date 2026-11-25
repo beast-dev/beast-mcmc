@@ -88,15 +88,15 @@ public class ParameterPriorGenerator extends Generator {
         //always write distribution likelihoods for rate, scale and intercept
         for (int i = 0; i < totalModels; i++) {
             String prefix = partitionClockModels.get(i).getPrefix();
-            mapParameterToPrior.put(ClockType.ME_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
-            mapParameterToPrior.put(ClockType.ME_CLOCK_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
-            mapParameterToPrior.put(BranchSpecificFixedEffectsParser.INTERCEPT, prefix + BranchSpecificFixedEffects.INTERCEPT_PRIOR);
+            mapParameterToPrior.put(prefix + ClockType.ME_CLOCK_LOCATION, prefix + BranchSpecificFixedEffects.RATES_PRIOR);
+            mapParameterToPrior.put(prefix + ClockType.ME_CLOCK_SCALE, prefix + BranchSpecificFixedEffects.SCALE_PRIOR);
+            mapParameterToPrior.put(prefix + BranchSpecificFixedEffectsParser.INTERCEPT, prefix + BranchSpecificFixedEffects.INTERCEPT_PRIOR);
             //check for coefficients
             String coeff = BranchSpecificFixedEffectsParser.COEFFICIENT;
             int number = 1;
             String concat = coeff + number;
             while (partitionClockModels.get(i).hasParameter(concat)) {
-                mapParameterToPrior.put(concat, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + number);
+                mapParameterToPrior.put(prefix + concat, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + number);
                 number++;
                 concat = coeff + number;
             }

@@ -659,7 +659,7 @@ public class ClockModelGenerator extends Generator {
                 writer.writeCloseTag(ArbitraryBranchRatesParser.SCALE);
 
                 writer.writeOpenTag(ArbitraryBranchRatesParser.LOCATION);
-                writer.writeIDref(BranchSpecificFixedEffectsParser.FIXED_EFFECTS, BranchSpecificFixedEffectsParser.FIXED_EFFECTS_MODEL);
+                writer.writeIDref(BranchSpecificFixedEffectsParser.FIXED_EFFECTS, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS_MODEL);
                 writer.writeCloseTag(ArbitraryBranchRatesParser.LOCATION);
 
                 writer.writeIDref(DefaultTreeModel.TREE_MODEL, treePrefix + DefaultTreeModel.TREE_MODEL);
@@ -671,11 +671,11 @@ public class ClockModelGenerator extends Generator {
                 // branch rates prior
                 writer.writeOpenTag(tag,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, BranchSpecificFixedEffects.RATES_PRIOR)
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffects.RATES_PRIOR)
                         }
                         );
                 writer.writeOpenTag(DistributionLikelihoodParser.DATA);
-                writer.writeIDref(PARAMETER, ClockType.ME_CLOCK_LOCATION);
+                writer.writeIDref(PARAMETER, prefix + ClockType.ME_CLOCK_LOCATION);
                 writer.writeCloseTag(DistributionLikelihoodParser.DATA);
                 writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
                 writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
@@ -704,11 +704,11 @@ public class ClockModelGenerator extends Generator {
                 // branch rates scale prior
                 writer.writeOpenTag(tag,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, BranchSpecificFixedEffects.SCALE_PRIOR)
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffects.SCALE_PRIOR)
                         }
                 );
                 writer.writeOpenTag(DistributionLikelihoodParser.DATA);
-                writer.writeIDref(PARAMETER, ClockType.ME_CLOCK_SCALE);
+                writer.writeIDref(PARAMETER, prefix + ClockType.ME_CLOCK_SCALE);
                 writer.writeCloseTag(DistributionLikelihoodParser.DATA);
                 writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
                 writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
@@ -726,11 +726,11 @@ public class ClockModelGenerator extends Generator {
                 // intercept prior
                 writer.writeOpenTag(tag,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, BranchSpecificFixedEffects.INTERCEPT_PRIOR)
+                                new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffects.INTERCEPT_PRIOR)
                         }
                 );
                 writer.writeOpenTag(DistributionLikelihoodParser.DATA);
-                writer.writeIDref(PARAMETER, BranchSpecificFixedEffectsParser.INTERCEPT);
+                writer.writeIDref(PARAMETER, prefix + BranchSpecificFixedEffectsParser.INTERCEPT);
                 writer.writeCloseTag(DistributionLikelihoodParser.DATA);
                 writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
                 writer.writeOpenTag(NormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
@@ -757,11 +757,11 @@ public class ClockModelGenerator extends Generator {
                 for (Taxa taxonSet : options.taxonSets) {
                     writer.writeOpenTag(tag,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + counter)
+                                    new Attribute.Default<String>(XMLParser.ID, prefix + BranchSpecificFixedEffectsParser.FIXED_EFFECTS_LIKELIHOOD + counter)
                             }
                     );
                     writer.writeOpenTag(DistributionLikelihoodParser.DATA);
-                    writer.writeIDref(PARAMETER, BranchSpecificFixedEffectsParser.COEFFICIENT + counter);
+                    writer.writeIDref(PARAMETER, prefix + BranchSpecificFixedEffectsParser.COEFFICIENT + counter);
                     writer.writeCloseTag(DistributionLikelihoodParser.DATA);
                     writer.writeOpenTag(DistributionLikelihoodParser.DISTRIBUTION);
                     writer.writeOpenTag(NormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
@@ -775,7 +775,7 @@ public class ClockModelGenerator extends Generator {
                     writer.writeOpenTag(LogNormalDistributionModelParser.STDEV);
                     writer.writeTag(PARAMETER,
                             new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, "betweenGroupStd" + counter),
+                                    new Attribute.Default<String>(XMLParser.ID, prefix + "betweenGroupStd" + counter),
                                     new Attribute.Default<String>(ParameterParser.VALUE, "100.0"),
                                     new Attribute.Default<String>(ParameterParser.LOWER, "0.0")
                             }, true);

@@ -251,6 +251,20 @@ public class BeastGenerator extends Generator {
                 }
             }
 
+            //++++++++++++++++ Sequence Error Models ++++++++++++++++++
+            // an error model serves one likelihood, and codon partitioning gives a partition one for each
+            // position
+            SequenceErrorModelComponentOptions sequenceErrors = (SequenceErrorModelComponentOptions)
+                    options.getComponentOptions(SequenceErrorModelComponentOptions.class);
+            for (AbstractPartitionData partition : options.getDataPartitions()) {
+                if (sequenceErrors.usingSequenceErrorModel(partition)
+                        && partition.getPartitionSubstitutionModel().getCodonPartitionCount() > 1) {
+                    throw new GeneratorException("A sequence error model cannot be used for partition \"" +
+                            partition.getName() + "\" while it is partitioned into codon positions.",
+                            BeautiFrame.ANCESTRAL_STATES);
+                }
+            }
+
             //++++++++++++++++ Hierarchical Models ++++++++++++++++++
             // a hierarchical model holds its parameters directly, so one built before the analysis was
             // changed can be left over parameters that are no longer in it; such a model would be written

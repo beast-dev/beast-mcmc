@@ -36,6 +36,7 @@ import dr.evomodelxml.treedatalikelihood.TreeDataLikelihoodParser;
 import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
+import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
@@ -417,6 +418,14 @@ public class TreeLikelihoodGenerator extends Generator {
         }
 
         if (ancestralStatesOptions.usingAncestralStates(partition)) {
+            return false;
+        }
+
+        // a sequence error model is a tip states model, which treeDataLikelihood does not take (it would
+        // have to be left out, and the error parameters would then be sampled from their priors)
+        SequenceErrorModelComponentOptions sequenceErrorOptions = (SequenceErrorModelComponentOptions) options
+                .getComponentOptions(SequenceErrorModelComponentOptions.class);
+        if (sequenceErrorOptions.usingSequenceErrorModel(partition)) {
             return false;
         }
 

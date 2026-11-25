@@ -378,10 +378,9 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         calculateHeights();
 
-        if (options.useTipDates) {
-            for (PartitionTreeModel treeModel : options.getPartitionTreeModels()) {
-                treeModel.setTipCalibrations(true);
-            }
+        // (in both directions: switching the tip dates off again has to take the calibration off the trees)
+        for (PartitionTreeModel treeModel : options.getPartitionTreeModels()) {
+            treeModel.setTipCalibrations(options.useTipDates);
         }
 
         setupTable();

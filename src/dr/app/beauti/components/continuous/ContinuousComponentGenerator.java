@@ -35,6 +35,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.ContinuousDataType;
 import dr.evolution.util.Taxon;
 import dr.evomodel.continuous.TreeDataContinuousDiffusionStatistic;
+import dr.evomodelxml.continuous.ContinuousTraitDataModelParser;
 import dr.evomodel.treedatalikelihood.continuous.IntegratedFactorAnalysisLikelihoodParser;
 import dr.evomodelxml.treedatalikelihood.continuous.RepeatedMeasuresTraitDataModelParser;
 import dr.evomodel.treedatalikelihood.continuous.RepeatedMeasuresWishartStatistics;
@@ -44,6 +45,9 @@ import dr.evomodelxml.treedatalikelihood.ContinuousDataLikelihoodParser;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
 import dr.xml.AttributeParser;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -680,16 +684,21 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         int traitDimension = partitionData.getPartitionSubstitutionModel().getContinuousTraitDimension(); //TODO: update
 
 
-        writer.writeOpenTag(continuousDataLikelihoodParser.getParserTag(),
-                new Attribute[]{
-                        new Attribute.Default<String>("id", continuousDataLikelihoodParser.getId(partitionData.getName())),
-                        new Attribute.Default<String>("traitName", partitionData.getName()),
-                        new Attribute.Default<String>("useTreeLength", "true"),
-                        new Attribute.Default<String>("scaleByTime", "true"),
-                        new Attribute.Default<String>("reportAsMultivariate", "true"),
-                        new Attribute.Default<String>("reciprocalRates", "false"),
-                        new Attribute.Default<String>("integrateInternalTraits", "true")
-                });
+        List<Attribute> likelihoodAttributes = new ArrayList<Attribute>();
+        likelihoodAttributes.add(new Attribute.Default<String>("id", continuousDataLikelihoodParser.getId(partitionData.getName())));
+        likelihoodAttributes.add(new Attribute.Default<String>("traitName", partitionData.getName()));
+        likelihoodAttributes.add(new Attribute.Default<String>("useTreeLength", "true"));
+        likelihoodAttributes.add(new Attribute.Default<String>("scaleByTime", "true"));
+        likelihoodAttributes.add(new Attribute.Default<String>("reportAsMultivariate", "true"));
+        likelihoodAttributes.add(new Attribute.Default<String>("reciprocalRates", "false"));
+        likelihoodAttributes.add(new Attribute.Default<String>("integrateInternalTraits", "true"));
+        if (partitionData.getPartitionSubstitutionModel().isIndependent()) {
+            // each column of the data is a trait of its own, evolving under the one-dimensional diffusion;
+            // without this BEAST takes the columns together as a single trait of that many dimensions
+            likelihoodAttributes.add(new Attribute.Default<Integer>(ContinuousTraitDataModelParser.NUM_TRAITS,
+                    partitionData.getPartitionSubstitutionModel().getContinuousTraitCount()));
+        }
+        writer.writeOpenTag(continuousDataLikelihoodParser.getParserTag(), likelihoodAttributes);
 
         writer.writeIDref("multivariateDiffusionModel", diffusionModelId);
 
@@ -803,7 +812,8 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                           String treeModelId, String precisionMatrixId, String traitLikelihoodId) {
         String prefix = partitionData.getName() + ".";
 
-        if (partitionData.getTraits().size() == 2) {
+        // (the correlation of two traits; independent traits share a one-dimensional precision, so have none)
+        if (partitionData.getTraits().size() == 2 && !partitionData.getPartitionSubstitutionModel().isIndependent()) {
             writer.writeOpenTag("correlation",
                     new Attribute[]{
                             new Attribute.Default<String>("id", prefix + "correlation"),
@@ -1026,7 +1036,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             if (model.getContinuousExtensionType() != ContinuousModelExtensionType.LATENT_FACTORS) {
                 writer.writeIDref("matrixParameter", model.getName() + ".precision");
 
-                if (partitionData.getTraits().size() == 2) {
+                if (partitionData.getTraits().size() == 2 && !model.isIndependent()) {
                     writer.writeIDref("correlation", prefix + "correlation");
                 }
                 writer.writeIDref("matrixInverse", prefix + "varCovar");

@@ -102,6 +102,10 @@ public class TraitGuesser implements Serializable {
     ////////////////////////////////////////////////////////////////
     public void guessTrait(TaxonList taxa) {
 
+        // the labels no value could be taken from: their taxa keep the value they have
+        int failureCount = 0;
+        StringBuilder failures = new StringBuilder();
+
         for (int i = 0; i < taxa.getTaxonCount(); i++) {
 
             String value = null;
@@ -119,9 +123,22 @@ public class TraitGuesser implements Serializable {
                 }
 
             } catch (GuessTraitException gfe) {
+                if (failureCount < 5) {
+                    failures.append("\n").append(taxa.getTaxonId(i));
+                }
+                failureCount++;
+                continue;
             }
 
             taxa.getTaxon(i).setAttribute(traitData.getName(), value);
+        }
+
+        if (failureCount > 0) {
+            // (the Traits panel shows this, as it does the delimiter errors)
+            throw new IllegalArgumentException("No value could be found in " + failureCount +
+                    (failureCount == 1 ? " taxon label" : " taxon labels") + ", which " +
+                    (failureCount == 1 ? "has" : "have") + " been left unchanged:" + failures +
+                    (failureCount > 5 ? "\n..." : ""));
         }
     }
 

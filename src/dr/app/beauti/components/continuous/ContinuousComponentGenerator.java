@@ -812,8 +812,10 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                           String treeModelId, String precisionMatrixId, String traitLikelihoodId) {
         String prefix = partitionData.getName() + ".";
 
-        // (the correlation of two traits; independent traits share a one-dimensional precision, so have none)
-        if (partitionData.getTraits().size() == 2 && !partitionData.getPartitionSubstitutionModel().isIndependent()) {
+        // (the correlation of two traits; independent traits share a one-dimensional precision, so have none,
+        // and with latent factors the precision is that of the factors: it is not logged, see writeParameterIdRefs)
+        if (partitionData.getTraits().size() == 2 && !partitionData.getPartitionSubstitutionModel().isIndependent()
+                && partitionData.getPartitionSubstitutionModel().getContinuousExtensionType() != ContinuousModelExtensionType.LATENT_FACTORS) {
             writer.writeOpenTag("correlation",
                     new Attribute[]{
                             new Attribute.Default<String>("id", prefix + "correlation"),

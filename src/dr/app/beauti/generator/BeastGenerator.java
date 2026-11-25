@@ -32,6 +32,7 @@ import dr.app.beauti.BeautiApp;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
+import dr.app.beauti.components.continuous.ContinuousModelExtensionType;
 import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.*;
@@ -262,6 +263,21 @@ public class BeastGenerator extends Generator {
                     throw new GeneratorException("A sequence error model cannot be used for partition \"" +
                             partition.getName() + "\" while it is partitioned into codon positions.",
                             BeautiFrame.ANCESTRAL_STATES);
+                }
+            }
+
+            //++++++++++++++++ Latent Factor Models ++++++++++++++++++
+            // more factors than traits is not a model BEAST can set up (it fails on the loadings)
+            for (AbstractPartitionData partition : options.getDataPartitions()) {
+                PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+                if (partition.getTraits() != null && model != null
+                        && model.getDataType().getType() == DataType.CONTINUOUS
+                        && model.getContinuousExtensionType() == ContinuousModelExtensionType.LATENT_FACTORS
+                        && model.getContinuousTraitCount() > partition.getTraits().size()) {
+                    throw new GeneratorException("The latent factor model for partition \"" + partition.getName() +
+                            "\" has " + model.getContinuousTraitCount() + " factors but only " +
+                            partition.getTraits().size() + (partition.getTraits().size() == 1 ? " trait" : " traits") +
+                            ": it can have at most as many factors as traits.", BeautiFrame.SITE_MODELS);
                 }
             }
 

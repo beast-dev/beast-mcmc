@@ -277,8 +277,10 @@ public class PartitionTreePrior extends PartitionOptions {
 //        createOperatorUsing2Parameters("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize",
 //                "demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
 
+        // the skyride's precision is sampled by this operator alone, and a scale factor of exactly 1 leaves it
+        // where it is (the skygrid's has a scale operator of its own, below)
         createOperatorUsing2Parameters("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF Skyride", "skyride.logPopSize",
-                "skyride.precision", OperatorType.GMRF_BLOCKUPDATE_OPERATOR, 1, 2);
+                "skyride.precision", OperatorType.GMRF_BLOCKUPDATE_OPERATOR, 2, 2);
         createOperatorUsing2Parameters("gmrfSkyGridGibbsOperator", "skygrid.logPopSize", "Gibbs sampler for Bayesian SkyGrid", "skygrid.logPopSize",
                 GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, OperatorType.SKY_GRID_BLOCKUPDATE_OPERATOR, 1, 2);
         createScaleOperator(GMRFSkyrideLikelihoodParser.SKYGRID_PRECISION, "skygrid precision", 0.75, 1.0);

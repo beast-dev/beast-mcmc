@@ -320,7 +320,7 @@
 		<fixedHeightSubtreePruneRegraft weight="3">
 			<treeModel idref="treeModel"/>
 		</fixedHeightSubtreePruneRegraft>
-		<gmrfBlockUpdateOperator scaleFactor="1.0" weight="2">
+		<gmrfBlockUpdateOperator scaleFactor="2.0" weight="2">
 			<gmrfSkyrideLikelihood idref="skyride"/>
 		</gmrfBlockUpdateOperator>
 	</operators>

@@ -217,9 +217,6 @@
 		<substitutionModel>
 			<aminoAcidModel idref="aa"/>
 		</substitutionModel>
-		<relativeRate>
-			<parameter id="mu" value="1.0" lower="0.0"/>
-		</relativeRate>
 		<gammaShape gammaCategories="4" discretization="quadrature">
 			<parameter id="alpha" value="0.5" lower="0.0"/>
 		</gammaShape>
@@ -259,7 +256,7 @@
 		<subtreeLeap size="1.0" weight="100">
 			<treeModel idref="treeModel"/>
 		</subtreeLeap>
-		<fixedHeightSubtreePruneRegraft weight="2">
+		<fixedHeightSubtreePruneRegraft weight="3">
 			<treeModel idref="treeModel"/>
 		</fixedHeightSubtreePruneRegraft>
 		<scaleOperator scaleFactor="0.75" weight="3">

@@ -204,7 +204,7 @@
 		<subtreeLeap size="1.0" weight="100">
 			<treeModel idref="treeModel"/>
 		</subtreeLeap>
-		<fixedHeightSubtreePruneRegraft weight="2">
+		<fixedHeightSubtreePruneRegraft weight="3">
 			<treeModel idref="treeModel"/>
 		</fixedHeightSubtreePruneRegraft>
 		<scaleOperator scaleFactor="0.75" weight="3">

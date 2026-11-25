@@ -148,6 +148,24 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                     TreePriorType.CONSTANT, TreePriorType.EXPONENTIAL, TreePriorType.LOGISTIC, TreePriorType.EXPANSION, TreePriorType.SKYGRID, TreePriorType.GMRF_SKYRIDE, TreePriorType.YULE
             );
             EnumSet<TreePriorType> allowedMCMTypes = EnumSet.of(TreePriorType.CONSTANT, TreePriorType.EXPONENTIAL, TreePriorType.LOGISTIC, TreePriorType.EXPANSION);
+            EnumSet<TreePriorType> speciationTypes = EnumSet.of(TreePriorType.YULE);
+
+            if (mleOptions.choiceTreeWorkingPrior.equals("None")) {
+                // the settings dialog starts at "None" to make the user choose, and makes this same choice for
+                // them when they leave it there; without this, selecting GSS and not opening the dialog failed
+                TreePriorType treePrior = options.getPartitionTreePriors().get(0).getNodeHeightPrior();
+                if (speciationTypes.contains(treePrior)) {
+                    mleOptions.choiceTreeWorkingPrior = "Matching speciation model";
+                } else if (allowedMCMTypes.contains(treePrior)) {
+                    mleOptions.choiceTreeWorkingPrior = "Matching coalescent model";
+                } else {
+                    mleOptions.choiceTreeWorkingPrior = "Product of exponential distributions";
+                }
+            }
+            // the coalescent events are logged for the product of exponentials, and only for it
+            beautiOptions.logCoalescentEventsStatistic =
+                    mleOptions.choiceTreeWorkingPrior.equals("Product of exponential distributions");
+
             for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 PartitionTreePrior prior = model.getPartitionTreePrior();
                 if (!allowedTypes.contains(prior.getNodeHeightPrior())) {
@@ -159,9 +177,17 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                     throw new GeneratorException("A Matching Coalescent Model cannot be constructed for\n" +
                             "the provided tree prior. Please check the Marginal Likelihood\n" +
                             "Estimation settings via the MCMC panel.");
-                } else if (mleOptions.choiceTreeWorkingPrior.equals("None")) {
-                    throw new GeneratorException("No tree working prior provided. Please check the Marginal Likelihood\n" +
-                            "Estimation settings via the MCMC panel.");
+                } else if (mleOptions.choiceTreeWorkingPrior.equals("Matching speciation model")
+                        && !speciationTypes.contains(prior.getNodeHeightPrior())) {
+                    throw new GeneratorException("A Matching Speciation Model cannot be constructed for\n" +
+                            "the provided tree prior, which is not a speciation model. Please check the\n" +
+                            "Marginal Likelihood Estimation settings via the MCMC panel.", BeautiFrame.MCMC);
+                } else if (mleOptions.choiceTreeWorkingPrior.equals("Product of exponential distributions")
+                        && speciationTypes.contains(prior.getNodeHeightPrior())) {
+                    throw new GeneratorException("The product of exponential distributions is a working prior for\n" +
+                            "coalescent tree priors, not for the " + prior.getNodeHeightPrior() + ".\n" +
+                            "Please select the Matching speciation model in the Marginal Likelihood\n" +
+                            "Estimation settings via the MCMC panel.", BeautiFrame.MCMC);
                 }
             }
 

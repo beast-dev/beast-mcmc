@@ -808,11 +808,10 @@ public class SubstitutionModelGenerator extends Generator {
         writer.writeCloseTag(SiteModelParser.SUBSTITUTION_MODEL);
 
         if (options.useNuRelativeRates()) {
+            // a relative rate only when there are several partitions to be relative to (as for nucleotides);
             Parameter parameter = model.getParameter("nu");
-            if (parameter.getParent() != null) {
+            if (parameter.getParent() != null && parameter.getParent().getSubParameters().size() > 0) {
                 writeNuRelativeRateBlock(writer, prefix, parameter);
-            } else {
-                writeParameter(SiteModelParser.RELATIVE_RATE, "mu", model, writer);
             }
         } else {
             writeParameter(SiteModelParser.RELATIVE_RATE, "mu", model, writer);

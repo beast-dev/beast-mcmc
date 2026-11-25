@@ -125,7 +125,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                 lowerField.setText(e.getActionCommand());
             }
         });
-        negativeInfinityButton.setToolTipText("Click to set 'Positive Infinity' in the numerical field.");
+        negativeInfinityButton.setToolTipText("Click to set 'Negative Infinity' in the numerical field.");
 
         positiveInfinityButton = new JButton(NumberFormat.getNumberInstance().format(Double.POSITIVE_INFINITY));
         PanelUtils.setupComponent(positiveInfinityButton);
@@ -136,7 +136,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                 upperField.setText(e.getActionCommand());
             }
         });
-        positiveInfinityButton.setToolTipText("Click to set 'Negative Infinity' in the numerical field.");
+        positiveInfinityButton.setToolTipText("Click to set 'Positive Infinity' in the numerical field.");
 
         initialField.setColumns(10);
         lowerField.setColumns(10);

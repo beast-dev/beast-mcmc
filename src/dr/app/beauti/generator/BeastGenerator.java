@@ -213,7 +213,7 @@ public class BeastGenerator extends Generator {
 
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                 if ((prior.getNodeHeightPrior() == TreePriorType.SKYGRID || prior.getNodeHeightPrior() == TreePriorType.SKYGRID_HMC)
-                        && Double.isNaN(prior.getSkyGridInterval())) {
+                        && !(prior.getSkyGridInterval() > 0.0)) { // (unset is NaN)
                     throw new GeneratorException("The Skygrid cut-off time must be set and greater than 0.0.", BeautiFrame.TREES);
                 }
             }

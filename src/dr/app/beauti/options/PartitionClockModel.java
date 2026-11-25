@@ -733,11 +733,12 @@ public class PartitionClockModel extends PartitionOptions {
             ops.add(getOperator(options.useNuRelativeRates() ? "deltaNus" : "deltaMus"));
         }
 
-        if (options.operatorSetType == OperatorSetType.ADAPTIVE_MULTIVARIATE) {
-            // unless a custom mix has been chosen these operators should be off if AMTK is on
+        if (options.operatorSetType != OperatorSetType.CUSTOM) {
+            // unless a custom mix has been chosen these operators should be off if AMTK is on, and back on
+            // when it is off again (as for the substitution model's)
             for (Operator op : ops) {
                 if (op.getParameter1() != null && op.getParameter1().isAdaptiveMultivariateCompatible) {
-                    op.setUsed(false);
+                    op.setUsed(options.operatorSetType != OperatorSetType.ADAPTIVE_MULTIVARIATE);
                 }
             }
         }

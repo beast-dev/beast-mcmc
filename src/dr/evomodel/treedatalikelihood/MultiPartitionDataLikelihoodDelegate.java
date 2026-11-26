@@ -82,7 +82,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         int index = resourceOrder.size() > 0 ? instanceCount % resourceOrder.size() : 0;
 
-        if (resourceOrder.size() > 0 && resourceOrder.get(index) > 0) {
+        if (resourceOrder.size() > 0 && !IS_CPU_RESOURCE(resourceOrder.get(index))) {
             return true;
         }
         if (requiredOrder.size() > 0 &&
@@ -295,7 +295,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             if (resourceOrder.size() > 0) {
                 // added the zero on the end so that a CPU is selected if requested resource fails
                 resourceList = new int[]{resourceOrder.get(instanceCount % resourceOrder.size()), 0};
-                if (resourceList[0] > 0) {
+                if (!IS_CPU_RESOURCE(resourceList[0])) {
                     preferenceFlags |= BeagleFlag.PROCESSOR_GPU.getMask(); // Add preference weight against CPU
                 }
             }
@@ -400,7 +400,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                             BeagleFlag.FRAMEWORK_CUDA.isSet(preferenceFlags) ||
                             BeagleFlag.FRAMEWORK_OPENCL.isSet(preferenceFlags)))
                     ||
-                    (resourceList != null && resourceList[0] > 0)) {
+                    (resourceList != null && !IS_CPU_RESOURCE(resourceList[0]))) {
                 // non-CPU implementations don't have SSE so remove default preference for SSE
                 // when using non-CPU preferences or prioritising non-CPU resource
                 preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();

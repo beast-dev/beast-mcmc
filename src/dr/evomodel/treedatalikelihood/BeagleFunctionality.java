@@ -27,7 +27,10 @@
 
 package dr.evomodel.treedatalikelihood;
 
+import beagle.BeagleFactory;
+import beagle.BeagleFlag;
 import beagle.BeagleInfo;
+import beagle.ResourceDetails;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +51,22 @@ public class BeagleFunctionality {
                 return false;
         }
         return true;
+    }
+
+    /**
+     * Whether a BEAGLE resource computes on a CPU. Resource 0 is this machine's CPU, but a higher number is not
+     * necessarily a GPU: the CPU of a beagle-worker on another machine (BEAGLE_REMOTE_HOSTS) is listed after the
+     * local resources, and wants the settings of a CPU: SSE, threads, and an instance per partition.
+     *
+     * @param resource the resource's number in BEAGLE's resource list
+     * @return true if the resource runs the CPU implementation, here or on a worker
+     */
+    public static boolean IS_CPU_RESOURCE(int resource) {
+        if (resource == 0) {
+            return true;
+        }
+        ResourceDetails details = BeagleFactory.getResourceDetails(resource);
+        return details != null && (details.getFlags() & BeagleFlag.FRAMEWORK_CPU.getMask()) != 0;
     }
 
     public static boolean IS_THREAD_COUNT_COMPATIBLE() {
